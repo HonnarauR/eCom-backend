@@ -53,7 +53,7 @@ app.get("/",(req,res,next)=>{
     res.end("Hello form main url")
 })
 
-app.get("/userName",(req,res,next)=>{
+app.get("/getname",(req,res,next)=>{
     res.status(200)
     res.send("honnaraju")
     res.end();
