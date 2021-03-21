@@ -1,7 +1,8 @@
 // const express = require('express');
 const bcrypt=require('bcrypt');
-const User=require("../models/user");
 const mongoose = require('mongoose');
+const jwt=require("jsonwebtoken");
+const User=require("../models/user");
 
 exports.signup=(req,res,next)=>{
     // console.log("i am inside signup");
@@ -37,6 +38,7 @@ exports.signup=(req,res,next)=>{
      })
  }
 
+
  exports.get_all_user= (req,res,next)=>{
     User.find()
     .exec()
@@ -70,15 +72,9 @@ exports.signup=(req,res,next)=>{
     })
  }
 
+
  exports.login = (req,res)=>{
-    // const usreData=[]; 
-
-    // const handleError = ()=>{
-    //     res.status(401).json({
-    //         message : "user not found / password missmatch",
-    //     })
-    // }
-
+    //check if userEmail is present in dataBase
     User.find({
         email : req.body.email.toLowerCase()
     })
@@ -86,13 +82,12 @@ exports.signup=(req,res,next)=>{
      .then((docs)=>{
         console.log(docs);
         if(docs.length==0){
-            // handleError;
             console.log("Error handled 0 size")
             res.status(401).json({
                 message : "user not found / password missmatch",
             })
         }
-        
+
         bcrypt.compare(req.body.password,docs[0].password,(err,sucsuss)=>{
             if(err){
                 console.log("Error handled - password missmatch")
@@ -103,8 +98,14 @@ exports.signup=(req,res,next)=>{
             if(sucsuss){
                 console.log("Succuss");
 
+                const LoggedInUser = jwt.sign({
+                    user_Id : docs[0]._id,
+                    email : docs[0].email
+                },"JWT_HR_SECRET_KEY",{expiresIn : "1h"})
+
                 return res.status(200).json({
-                    message : "logged in"
+                    message : "login successful",
+                    token : LoggedInUser
                 })
             }
         })
