@@ -10,5 +10,8 @@ router.post("/signup",UserController.signup);
 
 router.post("/login",UserController.login);
 
+router.patch("/:userId",UserController.update_user);
+
+// router.delete("/:userId",UserController.delete_user);
 
 module.exports = router;

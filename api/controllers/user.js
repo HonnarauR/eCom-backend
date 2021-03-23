@@ -1,8 +1,8 @@
-// const express = require('express');
 const bcrypt=require('bcrypt');
 const mongoose = require('mongoose');
 const jwt=require("jsonwebtoken");
 const User=require("../models/user");
+// const user = require('../models/user');
 
 exports.signup=(req,res,next)=>{
     // console.log("i am inside signup");
@@ -16,7 +16,8 @@ exports.signup=(req,res,next)=>{
                  _id : new mongoose.Types.ObjectId(),
                  userName : req.body.userName,
                  email : req.body.userEmail,
-                 password : hash
+                 password : hash,
+                 accessLevel : req.body.accessLevel
              });
             //  console.log(user);
              user.save()
@@ -59,7 +60,7 @@ exports.signup=(req,res,next)=>{
            return res.status(200).json(response);
         }
         else{
-         return res.status(404).json({
+         return res.status(500).json({
                 message : "No user found !"
             })
         }
@@ -73,8 +74,9 @@ exports.signup=(req,res,next)=>{
  }
 
 
- exports.login = (req,res)=>{
+ exports.login = (req,res,next)=>{
     //check if userEmail is present in dataBase
+    console.log(req.body)
     User.find({
         email : req.body.email.toLowerCase()
     })
@@ -82,20 +84,20 @@ exports.signup=(req,res,next)=>{
      .then((docs)=>{
         console.log(docs);
         if(docs.length==0){
-            console.log("Error handled 0 size")
+            // console.log("Error handled 0 size")
             res.status(401).json({
-                message : "user not found / password missmatch",
+                message : "auth failed",
             })
         }
 
-        bcrypt.compare(req.body.password,docs[0].password,(err,sucsuss)=>{
+        bcrypt.compare(req.body.password,docs[0].password,(err,success)=>{
             if(err){
-                console.log("Error handled - password missmatch")
+                // console.log("Error handled - password missmatch")
                return res.status(401).json({
-                    message : "user not found / password missmatch",
+                    message : "auth failed",
                 })
             }
-            if(sucsuss){
+            if(success){
                 console.log("Succuss");
 
                 const LoggedInUser = jwt.sign({
@@ -105,7 +107,9 @@ exports.signup=(req,res,next)=>{
 
                 return res.status(200).json({
                     message : "login successful",
-                    token : LoggedInUser
+                    token : LoggedInUser,
+                    accessLevel : docs[0].accessLevel
+                    
                 })
             }
         })
@@ -118,4 +122,28 @@ exports.signup=(req,res,next)=>{
             message : "user not found / password missmatch",
         })
      })
+ }
+
+ exports.update_user = (req,res,next)=>{
+     const id = req.params.userId
+     console.log(id);
+    //  res.status(200).json({
+    //      message : "placating"
+    //  })
+
+    User.updateOne({_id : id},{ $set:{
+        accessLevel : req.body.accessLevel
+    }}).exec()
+    .then(result=>{
+        console.log(result);
+        res.status(200).json({
+            message : "User updated"
+        })
+    })
+    .catch(err=>{
+        console.log(err);
+        res.status(500).json({
+            error : err
+        })
+    })
  }
